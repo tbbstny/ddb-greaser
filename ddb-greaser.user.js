@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         DDB Greaser
-// @namespace    https://github.com/tbbstny
-// @version      0.2
+// @name         D&D Beyond Greaser
+// @namespace    https://github.com/tbbstny/ddb-greaser
+// @version      0.0.2
 // @description  D&D Beyond DM Utilities
 // @author       3T
 // @match        https://www.dndbeyond.com/*
@@ -14,29 +14,60 @@
 // @grant        GM_addStyle
 // ==/UserScript==
 
-GM_addStyle('.icon {background: #ffc0c0; width: 30px; height: 30px; border-radius: 50%; text-align: center; line-height: 30px; vertical-align: -25%; padding: 5px;');
-console.log('TMKWTD Loaded');
+const $ = window.jQuery;
 
-var $ = window.jQuery;
+const THE_MONSTERS_KNOW = "the_monsters_know";
+const PARENTHETICALS    = /\(.*\)/;
+
+const MONSTER_CONTAINER = `.encounter-details-monster-summary-info-panel,.encounter-details__content-section--monster-stat-block,.combat-tracker-page__content-section--monster-stat-block,.monster-details-modal__body`;
+const MONSTER_NAME      = `.mon-stat-block__name`;
+
+// Style for "The Monsters Know What They're Doing" search icon
+GM_addStyle(`.${THE_MONSTERS_KNOW} {padding: 0 0 0 5px}`);
+GM_addStyle(`.icon {color: #8F4A5F; background: #E2C0C6; font-size: 30px; width: 30px; height: 30px; padding: 0; border-radius: 50%; text-align: center; line-height: 30px; vertical-align: -25%;`);
+
 
 (function() {
     'use strict';
+    var last_monster_name = null;
 
     const documentModified = function(mutations, observer) {
-
-        // Find Monster Name, and add link to TMKWTD search
-        $.find('a.mon-stat-block__name-link').each(function(link) {
-            var $el = $(link);
-            if(!$el.siblings().length) {
-                var href = "https://www.themonstersknow.com/?s=" + $el.text().trim();
-                $el.after('<a href="'+ href + '" style="font-size: 20px; color: #822000; background: radial-gradient(30px circle at 50px 200px, #822000 50%, transparent 51%);" target="_blank"><iconify-icon icon="game-icons:behold" class="icon"></iconify-icon></a>');
-            }
-        });
-
+        const monster = $(MONSTER_CONTAINER);
+        const monster_name = monster.find(MONSTER_NAME).text();
+        console.log("Doc modified, new monster : ", monster_name, " !=? ", last_monster_name);
+        if (monster_name !== last_monster_name) {
+            last_monster_name = monster_name;
+            degrease();
+            grease();
+        }
     }
 
     // Watch DOM for changes
     const observer = new window.MutationObserver(documentModified);
     observer.observe(document, { "subtree": true, "childList": true, attributes: true, });
+    console.log('D&D Beyond Greaser Loaded');
 })();
 
+
+function degrease() {
+    $(`.${THE_MONSTERS_KNOW}`).remove();
+}
+
+function grease() {
+    addTMKSearchLink();
+}
+
+
+/**
+ * Find Monster Name, and add link to TMKWTD search
+ */
+function addTMKSearchLink() {
+    $('a.mon-stat-block__name-link').each(function(index, link) {
+        var $el = $(link);
+        if(!$el.siblings().length) {
+            var href = "https://www.themonstersknow.com/?s=" + $el.text().replace(PARENTHETICALS,'').trim().replaceAll(' ', '+');
+            console.log("Add TMK Search Link: " + href);
+            $el.after(`<a class="${THE_MONSTERS_KNOW}" href="${href}" target="_blank"><iconify-icon icon="game-icons:behold" class="icon" title='Search "The Monsters Know What They&#39re Doing"'></iconify-icon></a>`);
+        }
+    });
+}

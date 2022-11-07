@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         D&D Beyond Greaser
 // @namespace    https://github.com/tbbstny/ddb-greaser
-// @version      0.0.3
+// @version      0.0.2
 // @description  D&D Beyond DM Utilities
 // @author       3T
 // @match        https://www.dndbeyond.com/*
-// @updateURL	 https://github.com/tbbstny/ddb-greaser/raw/main/tmkwtd.user.js
-// @downloadURL	 https://github.com/tbbstny/ddb-greaser/raw/main/tmkwtd.user.js
+// @updateURL	 https://github.com/tbbstny/ddb-greaser/raw/main/ddb-greaser.user.js
+// @downloadURL	 https://github.com/tbbstny/ddb-greaser/raw/main/ddb-greaser.user.js
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js
 // @require      https://code.iconify.design/iconify-icon/1.0.0/iconify-icon.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.3.2/math.min.js
@@ -35,6 +35,7 @@ GM_addStyle(`.${PLAYER_DEFENSE} {color: #8F4A5F; background: #E2C0C6; border-rad
 (function() {
     'use strict';
     var last_monster_name = null;
+    var last_header = null;
 
     const documentModified = function(mutations, observer) {
         const monster = $(MONSTER_CONTAINER);
@@ -61,7 +62,7 @@ function degrease() {
 
 function grease() {
     addTMKSearchLink();
-    addPlayerDefence();
+    addMonsterPlayerDefenceStat();
 }
 
 
@@ -82,7 +83,7 @@ function addTMKSearchLink() {
 /**
  *
  */
-function addPlayerDefence() {
+function addMonsterPlayerDefenceStat() {
     $('p:contains(" to hit")').each(function(i, p) {
         let match = $(p).text().match(/([+-][0-9]+) to hit/);
         let toHitBonus = match[1]
@@ -99,11 +100,5 @@ function addPlayerDefence() {
 }
 
 
-function addCharacterDefence() {
-    $('div.ddbc-armor-class-box__value').each(function(i, ac) {
-        $(ac).attr("title","Player Defense = d20 + (AC - 10)");
-        $(ac).text("???");
-    });
-}
 
 

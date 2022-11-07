@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         D&D Beyond Greaser
 // @namespace    https://github.com/tbbstny/ddb-greaser
-// @version      0.0.2
+// @version      0.0.3
 // @description  D&D Beyond DM Utilities
 // @author       3T
 // @match        https://www.dndbeyond.com/*

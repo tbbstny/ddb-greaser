@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         D&D Beyond Greaser
 // @namespace    https://github.com/tbbstny/ddb-greaser
-// @version      0.0.2
+// @version      0.0.3
 // @description  D&D Beyond DM Utilities
 // @author       3T
 // @match        https://www.dndbeyond.com/*
@@ -14,6 +14,7 @@
 // @grant        GM_getValue
 // @grant        GM_addStyle
 // ==/UserScript==
+/* globals jQuery, $, math */
 console.info('D&D Beyond Greaser Starting');
 
 const $ = window.jQuery;
@@ -21,6 +22,8 @@ const $ = window.jQuery;
 /* eslint-disable no-multi-spaces */
 const THE_MONSTERS_KNOW = "the_monsters_know";
 const PLAYER_DEFENSE    = "player_defense";
+const HP_RANGE          = "hp_range";
+const HITS              = "prof_dm_hits";
 const PARENTHETICALS    = /\(.*\)/;
 
 const MONSTER_CONTAINER = `.encounter-details-monster-summary-info-panel,.encounter-details__content-section--monster-stat-block,.combat-tracker-page__content-section--monster-stat-block,.monster-details-modal__body`;
@@ -58,11 +61,14 @@ GM_addStyle(`.${PLAYER_DEFENSE} {color: #8F4A5F; background: #E2C0C6; border-rad
 function degrease() {
     $(`.${THE_MONSTERS_KNOW}`).remove();
     $(`.${PLAYER_DEFENSE}`).remove();
+    $(`.${HP_RANGE}`).remove();
+    $(`.${HITS}`).remove();
 }
 
 function grease() {
     addTMKSearchLink();
-    addMonsterPlayerDefenceStat();
+    addMonsterPlayerDefenseStat();
+    refineHP();
 }
 
 
@@ -81,9 +87,9 @@ function addTMKSearchLink() {
 }
 
 /**
- *
+ * Inject Player Defense Stat (12 + Monster's To Hit bonus) to the text.
  */
-function addMonsterPlayerDefenceStat() {
+function addMonsterPlayerDefenseStat() {
     $('p:contains(" to hit")').each(function(i, p) {
         let match = $(p).text().match(/([+-][0-9]+) to hit/);
         let toHitBonus = match[1]
@@ -99,6 +105,42 @@ function addMonsterPlayerDefenceStat() {
     });
 }
 
+/*
+ * Monster Hits = Round HP to closes 10 then divide by 10.
+ * @see also: https://youtu.be/MABlOHYommI
+ */
+function refineHP() {
+    $('.mon-stat-block__attribute-label:contains("Hit Points")').each(function(i, hp) {
+        let $HP = $(hp).parent();
+        console.log("Avg HP: " + $HP.find('.mon-stat-block__attribute-data-value').text());
+        console.log("Extra: " + $HP.find('.mon-stat-block__attribute-data-extra').text());
 
+        let matches = /(\d+)d(\d+)\s*([+-])*\s*(\d*)/.exec($HP.find('.mon-stat-block__attribute-data-extra').text());
 
+        let numDie = matches[1];
+        let typeDie = matches[2];
+        let operator = matches[3] || '+';
+        let bonus = matches[4] || "0";
+        console.log(`${numDie}d${typeDie} ${operator} ${bonus}`);
 
+        const MIN = math.evaluate(`${numDie} ${operator} ${bonus}`);
+        const MAX = math.evaluate(`${numDie}*${typeDie} ${operator} ${bonus}`);
+        console.log(`MIN: ${MIN}, MAX: ${MAX}`);
+
+        $HP.find('.mon-stat-block__attribute-data-value').after(` <span class="${HP_RANGE}">[${MIN}..${MAX}]`);
+
+        addProfDMHits($HP, MIN, MAX);
+    });
+}
+
+/*
+ * Monster Hits = Round HP to closes 10 then divide by 10.
+ * @see also: https://youtu.be/MABlOHYommI
+ */
+function addProfDMHits($el, min, max) {
+    const MIN = Math.max(1, Math.round(min / 10));
+    const MAX = Math.round(max / 10);
+    const AVG = Math.max(1, Math.round(((min + max) / 2) / 10));
+    let abc = `<div class="${HITS} mon-stat-block__attribute"><span class="mon-stat-block__attribute-label">Hits</span> <span class="mon-stat-block__attribute-data"><span class="mon-stat-block__attribute-data-value">${AVG}</span> <span class="hit_range">[${MIN}..${MAX}]</span>`
+    $el.after(`${abc}`);
+}

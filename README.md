@@ -8,4 +8,4 @@ A [Tampermonkey](https://www.tampermonkey.net/) (and probably [Greasemonkey](htt
 - Add a new attribute **Hits** as described by [Professor Dungeonmaster](https://youtu.be/MABlOHYommI), using average and min/max range
 - Add a new **Player Defense** beside all "To Hit" attacks.  Rather than the DM rolling monster attacks, the players roll to defend.  The player defense roll is d20 + (AC - 10) vs. 12 + Monster's To Hit bouns.  Ties go to the palyer.  This idea also comes by [Professor Dungeonmaster](https://youtu.be/L8If0mcYvnk), and explained in more detail in the comments.  
 
-![](monster_stats.png)
+![](beholder_stats.png)
